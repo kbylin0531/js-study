@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>grammar.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="browser.html">
+                browser.coffee
+              </a>
+            
+              
+              <a class="source" href="cake.html">
+                cake.coffee
+              </a>
+            
+              
+              <a class="source" href="coffee-script.html">
+                coffee-script.coffee
+              </a>
+            
+              
+              <a class="source" href="command.html">
+                command.coffee
+              </a>
+            
+              
+              <a class="source" href="grammar.html">
+                grammar.coffee
+              </a>
+            
+              
+              <a class="source" href="helpers.html">
+                helpers.coffee
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.coffee
+              </a>
+            
+              
+              <a class="source" href="lexer.html">
+                lexer.coffee
+              </a>
+            
+              
+              <a class="source" href="nodes.html">
+                nodes.coffee
+              </a>
+            
+              
+              <a class="source" href="optparse.html">
+                optparse.coffee
+              </a>
+            
+              
+              <a class="source" href="register.html">
+                register.coffee
+              </a>
+            
+              
+              <a class="source" href="repl.html">
+                repl.coffee
+              </a>
+            
+              
+              <a class="source" href="rewriter.html">
+                rewriter.coffee
+              </a>
+            
+              
+              <a class="source" href="scope.html">
+                scope.litcoffee
+              </a>
+            
+              
+              <a class="source" href="sourcemap.html">
+                sourcemap.litcoffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>grammar.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>CoffeeScript 的解析器是从这个语法文件, 用 <a href="http://github.com/zaach/jison">Jison</a> 生成的.
+Jison 是个自底而上的解析器生成工具, 和 <a href="http://www.gnu.org/software/bison">Bison</a> 的风格相似, 不过是用 JavaScript 实现的.
+它可以辨认 <a href="http://en.wikipedia.org/wiki/LR_grammar">LALR(1), LR(0), SLR(1) 和 LR(1)</a> 语法.
+为了创建 Jison 解析器, 我们把匹配模式列在左边, 把对应动作列在右边 (通常是创建语法树的节点).
+执行的时候, 解析器自左往右地, 从流中取出 token, 然后尝试把 token 序列<a href="http://en.wikipedia.org/wiki/Bottom-up_parsing">匹配</a>
+到下面写的语法规则中. 如果可以匹配, 会把取出的 token 缩减成 <a href="http://en.wikipedia.org/wiki/Terminal_and_nonterminal_symbols">nonterminal</a>
+的符号 (语法规则前边的名字), 然后继续.</p>
+<p>如果你执行命令 <code>cake build:parser</code>, Jison 就会按照我们的规则建立语法解析表, 保存到 <code>lib/parser.js</code> 中.</p>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>唯一的依赖: <strong>Jison.Parser</strong>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>{Parser} = <span class="hljs-built_in">require</span> <span class="hljs-string">'jison'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2 id="jison-dsl">Jison DSL</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Jison 会给我们的解析器多包装一层函数.
+如果包装函数只是简单的返回一个值, 我们就可以通过移除包装函数, 直接返回里面的内容来做优化.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>unwrap = <span class="hljs-regexp">/^function\s*\(\)\s*\{\s*return\s*([\s\S]*);\s*\}/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>我们方便 Jison 语法生成的 DSL 要感谢 <a href="http://github.com/creationix">Tim Caswell</a>.
+每条语法规则带有定义模式的字符串, 可选的动作和额外选项.
+如果没有指定动作, 就简单的返回上一个 nonterminal 的值.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">o</span> = <span class="hljs-params">(patternString, action, options)</span> -&gt;</span>
+  patternString = patternString.replace <span class="hljs-regexp">/\s{2,}/g</span>, <span class="hljs-string">' '</span>
+  patternCount = patternString.split(<span class="hljs-string">' '</span>).length
+  <span class="hljs-keyword">return</span> [patternString, <span class="hljs-string">'$$ = $1;'</span>, options] <span class="hljs-keyword">unless</span> action
+  action = <span class="hljs-keyword">if</span> match = unwrap.exec action <span class="hljs-keyword">then</span> match[<span class="hljs-number">1</span>] <span class="hljs-keyword">else</span> <span class="hljs-string">"(<span class="hljs-subst">#{action}</span>())"</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>所有需要在 “yy” 上定义的运行时函数</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  action = action.replace <span class="hljs-regexp">/\bnew /g</span>, <span class="hljs-string">'$&amp;yy.'</span>
+  action = action.replace <span class="hljs-regexp">/\b(?:Block\.wrap|extend)\b/g</span>, <span class="hljs-string">'yy.$&amp;'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>构造一个函数, 往第一个参数加上位置数据, 然后返回之.
+如果该参数不是节点, 就不做修改的返回.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-function"><span class="hljs-title">addLocationDataFn</span> = <span class="hljs-params">(first, last)</span> -&gt;</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> last
+      <span class="hljs-string">"yy.addLocationDataFn(@<span class="hljs-subst">#{first}</span>)"</span>
+    <span class="hljs-keyword">else</span>
+      <span class="hljs-string">"yy.addLocationDataFn(@<span class="hljs-subst">#{first}</span>, @<span class="hljs-subst">#{last}</span>)"</span>
+
+  action = action.replace <span class="hljs-regexp">/LOC\(([0-9]*)\)/g</span>, addLocationDataFn(<span class="hljs-string">'$1'</span>)
+  action = action.replace <span class="hljs-regexp">/LOC\(([0-9]*),\s*([0-9]*)\)/g</span>, addLocationDataFn(<span class="hljs-string">'$1'</span>, <span class="hljs-string">'$2'</span>)
+
+  [patternString, <span class="hljs-string">"$$ = <span class="hljs-subst">#{addLocationDataFn(<span class="hljs-number">1</span>, patternCount)}</span>(<span class="hljs-subst">#{action}</span>);"</span>, options]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <h2 id="-">语法规则</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>下面列出了候选的匹配规则. 你可以看到 nonterminal 的名字是键值.
+每个匹配的动作中, 以 <code>$</code> 打头的变量是 Jison 提供的, 对应数字的位置的值. 在这条规则中:</p>
+<pre><code><span class="hljs-string">"Expression UNLESS Expression"</span>
+</code></pre><p><code>$1</code> 的值就是第一个 <code>Expression</code>, <code>$2</code> 的值就是终结符(terminal) <code>UNLESS</code> 对应的 token, <code>$3</code> 就是的值就是第二个 <code>Expression</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>grammar =</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p><strong>Root</strong> 是语法树最顶层的节点. 由于我们是自低而上解析的, 所有解析都会终结于此.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Root</span>: [
+    o <span class="hljs-string">''</span>,<span class="hljs-function">                                       -&gt;</span> <span class="hljs-keyword">new</span> Block
+    o <span class="hljs-string">'Body'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>由任意语句和表达式组成, 被换行符或者分号分隔</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Body</span>: [
+    o <span class="hljs-string">'Line'</span>,<span class="hljs-function">                                   -&gt;</span> Block.wrap [$<span class="hljs-number">1</span>]
+    o <span class="hljs-string">'Body TERMINATOR Line'</span>,<span class="hljs-function">                   -&gt;</span> $<span class="hljs-number">1.</span>push $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Body TERMINATOR'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>块和语句, 占据 <strong>Body</strong> 中的一行</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Line</span>: [
+    o <span class="hljs-string">'Expression'</span>
+    o <span class="hljs-string">'Statement'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>不能当作表达式的纯语句</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Statement</span>: [
+    o <span class="hljs-string">'Return'</span>
+    o <span class="hljs-string">'Comment'</span>
+    o <span class="hljs-string">'STATEMENT'</span>,<span class="hljs-function">                              -&gt;</span> <span class="hljs-keyword">new</span> Literal $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>我们语言中所有不同类型的表达式. CoffeeScript 的基本组成元素是 <strong>Expression</strong> — 所有可以成为表达式的东西都融为一个规则.
+例外的是, <strong>Block</strong> 同时也递归作为其他很多规则的基本构件, 所以没添加到这里.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Expression</span>: [
+    o <span class="hljs-string">'Value'</span>
+    o <span class="hljs-string">'Invocation'</span>
+    o <span class="hljs-string">'Code'</span>
+    o <span class="hljs-string">'Operation'</span>
+    o <span class="hljs-string">'Assign'</span>
+    o <span class="hljs-string">'If'</span>
+    o <span class="hljs-string">'Try'</span>
+    o <span class="hljs-string">'While'</span>
+    o <span class="hljs-string">'For'</span>
+    o <span class="hljs-string">'Switch'</span>
+    o <span class="hljs-string">'Class'</span>
+    o <span class="hljs-string">'Throw'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>由表达式组成, 缩进的块. 注意 <a href="rewriter.html">Rewriter</a> 会通过调整 token 流的方法, 把一些后缀式的写法转换成块.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Block</span>: [
+    o <span class="hljs-string">'INDENT OUTDENT'</span>,<span class="hljs-function">                         -&gt;</span> <span class="hljs-keyword">new</span> Block
+    o <span class="hljs-string">'INDENT Body OUTDENT'</span>,<span class="hljs-function">                    -&gt;</span> $<span class="hljs-number">2</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>标识符字面量, 变量名或者属性.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Identifier</span>: [
+    o <span class="hljs-string">'IDENTIFIER'</span>,<span class="hljs-function">                             -&gt;</span> <span class="hljs-keyword">new</span> Literal $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Alphanumerics 独立于其他 <strong>Literal</strong>, 是因为它们仅用作对象字面量的的键值.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">AlphaNumeric</span>: [
+    o <span class="hljs-string">'NUMBER'</span>,<span class="hljs-function">                                 -&gt;</span> <span class="hljs-keyword">new</span> Literal $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'STRING'</span>,<span class="hljs-function">                                 -&gt;</span> <span class="hljs-keyword">new</span> Literal $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>所有直接量. 基本都可以不处理直接变成 JavaScript.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Literal</span>: [
+    o <span class="hljs-string">'AlphaNumeric'</span>
+    o <span class="hljs-string">'JS'</span>,<span class="hljs-function">                                     -&gt;</span> <span class="hljs-keyword">new</span> Literal $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'REGEX'</span>,<span class="hljs-function">                                  -&gt;</span> <span class="hljs-keyword">new</span> Literal $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'DEBUGGER'</span>,<span class="hljs-function">                               -&gt;</span> <span class="hljs-keyword">new</span> Literal $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'UNDEFINED'</span>,<span class="hljs-function">                              -&gt;</span> <span class="hljs-keyword">new</span> Undefined
+    o <span class="hljs-string">'NULL'</span>,<span class="hljs-function">                                   -&gt;</span> <span class="hljs-keyword">new</span> Null
+    o <span class="hljs-string">'BOOL'</span>,<span class="hljs-function">                                   -&gt;</span> <span class="hljs-keyword">new</span> Bool $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>变量, 属性或者下标 的赋值</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Assign</span>: [
+    o <span class="hljs-string">'Assignable = Expression'</span>,<span class="hljs-function">                -&gt;</span> <span class="hljs-keyword">new</span> Assign $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Assignable = TERMINATOR Expression'</span>,<span class="hljs-function">     -&gt;</span> <span class="hljs-keyword">new</span> Assign $<span class="hljs-number">1</span>, $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'Assignable = INDENT Expression OUTDENT'</span>,<span class="hljs-function"> -&gt;</span> <span class="hljs-keyword">new</span> Assign $<span class="hljs-number">1</span>, $<span class="hljs-number">4</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>在对象字面量中的赋值. 和一般 <strong>Assign</strong> 规则不同之处是: 这里允许数字或者字符串作为键值.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">AssignObj</span>: [
+    o <span class="hljs-string">'ObjAssignable'</span>,<span class="hljs-function">                          -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'ObjAssignable : Expression'</span>,<span class="hljs-function">             -&gt;</span> <span class="hljs-keyword">new</span> Assign LOC(<span class="hljs-number">1</span>)(<span class="hljs-keyword">new</span> Value($<span class="hljs-number">1</span>)), $<span class="hljs-number">3</span>, <span class="hljs-string">'object'</span>
+    o <span class="hljs-string">'ObjAssignable :
+       INDENT Expression OUTDENT'</span>,<span class="hljs-function">              -&gt;</span> <span class="hljs-keyword">new</span> Assign LOC(<span class="hljs-number">1</span>)(<span class="hljs-keyword">new</span> Value($<span class="hljs-number">1</span>)), $<span class="hljs-number">4</span>, <span class="hljs-string">'object'</span>
+    o <span class="hljs-string">'Comment'</span>
+  ]
+
+  <span class="hljs-attribute">ObjAssignable</span>: [
+    o <span class="hljs-string">'Identifier'</span>
+    o <span class="hljs-string">'AlphaNumeric'</span>
+    o <span class="hljs-string">'ThisProperty'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p>函数体中的返回语句.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Return</span>: [
+    o <span class="hljs-string">'RETURN Expression'</span>,<span class="hljs-function">                      -&gt;</span> <span class="hljs-keyword">new</span> Return $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'RETURN'</span>,<span class="hljs-function">                                 -&gt;</span> <span class="hljs-keyword">new</span> Return
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>注释块</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Comment</span>: [
+    o <span class="hljs-string">'HERECOMMENT'</span>,<span class="hljs-function">                            -&gt;</span> <span class="hljs-keyword">new</span> Comment $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p><strong>Code</strong> 节点是函数字面量. 缩进的代码块 <strong>Block</strong> 之前带一个函数箭头, 和一个可选的参数列表.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Code</span>: [
+    o <span class="hljs-string">'PARAM_START ParamList PARAM_END FuncGlyph Block'</span>,<span class="hljs-function"> -&gt;</span> <span class="hljs-keyword">new</span> Code $<span class="hljs-number">2</span>, $<span class="hljs-number">5</span>, $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'FuncGlyph Block'</span>,<span class="hljs-function">                        -&gt;</span> <span class="hljs-keyword">new</span> Code [], $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>CoffeeScript 有两个不同的箭头符号. <code>-&gt;</code> 是给一般函数用的, 而 <code>=&gt;</code> 函数会绑定到当前 <em>this</em> 的值.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">FuncGlyph</span>: [
+    o <span class="hljs-string">'-&gt;'</span>,<span class="hljs-function">                                     -&gt;</span> <span class="hljs-string">'func'</span>
+    o <span class="hljs-string">'=&gt;'</span>,<span class="hljs-function">                                     -&gt;</span> <span class="hljs-string">'boundfunc'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>可选的行末逗号</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">OptComma</span>: [
+    o <span class="hljs-string">''</span>
+    o <span class="hljs-string">','</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>函数可以接受任意长的参数列表</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">ParamList</span>: [
+    o <span class="hljs-string">''</span>,<span class="hljs-function">                                       -&gt;</span> []
+    o <span class="hljs-string">'Param'</span>,<span class="hljs-function">                                  -&gt;</span> [$<span class="hljs-number">1</span>]
+    o <span class="hljs-string">'ParamList , Param'</span>,<span class="hljs-function">                      -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'ParamList OptComma TERMINATOR Param'</span>,<span class="hljs-function">    -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'ParamList OptComma INDENT ParamList OptComma OUTDENT'</span>,<span class="hljs-function"> -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">4</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>函数的一个参数可以正常的定义, 或者用 splat 把剩下的参数汇集到一起.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Param</span>: [
+    o <span class="hljs-string">'ParamVar'</span>,<span class="hljs-function">                               -&gt;</span> <span class="hljs-keyword">new</span> Param $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'ParamVar ...'</span>,<span class="hljs-function">                           -&gt;</span> <span class="hljs-keyword">new</span> Param $<span class="hljs-number">1</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">on</span>
+    o <span class="hljs-string">'ParamVar = Expression'</span>,<span class="hljs-function">                  -&gt;</span> <span class="hljs-keyword">new</span> Param $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'...'</span>,<span class="hljs-function">                                    -&gt;</span> <span class="hljs-keyword">new</span> Expansion
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>函数参数.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">ParamVar</span>: [
+    o <span class="hljs-string">'Identifier'</span>
+    o <span class="hljs-string">'ThisProperty'</span>
+    o <span class="hljs-string">'Array'</span>
+    o <span class="hljs-string">'Object'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <p>在函数参数之外的 splat.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Splat</span>: [
+    o <span class="hljs-string">'Expression ...'</span>,<span class="hljs-function">                         -&gt;</span> <span class="hljs-keyword">new</span> Splat $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <p>可以赋值的变量或者属性.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">SimpleAssignable</span>: [
+    o <span class="hljs-string">'Identifier'</span>,<span class="hljs-function">                             -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'Value Accessor'</span>,<span class="hljs-function">                         -&gt;</span> $<span class="hljs-number">1.</span>add $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'Invocation Accessor'</span>,<span class="hljs-function">                    -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>, [].concat $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'ThisProperty'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>所有可以赋值到的东西.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Assignable</span>: [
+    o <span class="hljs-string">'SimpleAssignable'</span>
+    o <span class="hljs-string">'Array'</span>,<span class="hljs-function">                                  -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'Object'</span>,<span class="hljs-function">                                 -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>可以被当作值的类型 — 可赋值到的量, 函数调用, 数组下标, “类”等等.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Value</span>: [
+    o <span class="hljs-string">'Assignable'</span>
+    o <span class="hljs-string">'Literal'</span>,<span class="hljs-function">                                -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'Parenthetical'</span>,<span class="hljs-function">                          -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'Range'</span>,<span class="hljs-function">                                  -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'This'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>总合了大部分访问对象内容的手段: 通过属性, 原型, 数组下标或者数组切片.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Accessor</span>: [
+    o <span class="hljs-string">'.  Identifier'</span>,<span class="hljs-function">                          -&gt;</span> <span class="hljs-keyword">new</span> Access $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'?. Identifier'</span>,<span class="hljs-function">                          -&gt;</span> <span class="hljs-keyword">new</span> Access $<span class="hljs-number">2</span>, <span class="hljs-string">'soak'</span>
+    o <span class="hljs-string">':: Identifier'</span>,<span class="hljs-function">                          -&gt;</span> [LOC(<span class="hljs-number">1</span>)(<span class="hljs-keyword">new</span> Access <span class="hljs-keyword">new</span> Literal(<span class="hljs-string">'prototype'</span>)), LOC(<span class="hljs-number">2</span>)(<span class="hljs-keyword">new</span> Access $<span class="hljs-number">2</span>)]
+    o <span class="hljs-string">'?:: Identifier'</span>,<span class="hljs-function">                         -&gt;</span> [LOC(<span class="hljs-number">1</span>)(<span class="hljs-keyword">new</span> Access <span class="hljs-keyword">new</span> Literal(<span class="hljs-string">'prototype'</span>), <span class="hljs-string">'soak'</span>), LOC(<span class="hljs-number">2</span>)(<span class="hljs-keyword">new</span> Access $<span class="hljs-number">2</span>)]
+    o <span class="hljs-string">'::'</span>,<span class="hljs-function">                                     -&gt;</span> <span class="hljs-keyword">new</span> Access <span class="hljs-keyword">new</span> Literal <span class="hljs-string">'prototype'</span>
+    o <span class="hljs-string">'Index'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <p>使用方括号语法访问对象或数组内部.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Index</span>: [
+    o <span class="hljs-string">'INDEX_START IndexValue INDEX_END'</span>,<span class="hljs-function">       -&gt;</span> $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'INDEX_SOAK  Index'</span>,<span class="hljs-function">                      -&gt;</span> extend $<span class="hljs-number">2</span>, soak : <span class="hljs-literal">yes</span>
+  ]
+
+  <span class="hljs-attribute">IndexValue</span>: [
+    o <span class="hljs-string">'Expression'</span>,<span class="hljs-function">                             -&gt;</span> <span class="hljs-keyword">new</span> Index $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'Slice'</span>,<span class="hljs-function">                                  -&gt;</span> <span class="hljs-keyword">new</span> Slice $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-37">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-37">&#182;</a>
+              </div>
+              <p>在 CoffeeScript 里, 一个对象字面量是简单的由属性赋值列表组成.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Object</span>: [
+    o <span class="hljs-string">'{ AssignList OptComma }'</span>,<span class="hljs-function">                -&gt;</span> <span class="hljs-keyword">new</span> Obj $<span class="hljs-number">2</span>, $<span class="hljs-number">1.</span>generated
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <p>对象字面量中的属性赋值, 可以像 JavaScript 那样用逗号分隔, 或者直接用换行分隔.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">AssignList</span>: [
+    o <span class="hljs-string">''</span>,<span class="hljs-function">                                                       -&gt;</span> []
+    o <span class="hljs-string">'AssignObj'</span>,<span class="hljs-function">                                              -&gt;</span> [$<span class="hljs-number">1</span>]
+    o <span class="hljs-string">'AssignList , AssignObj'</span>,<span class="hljs-function">                                 -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'AssignList OptComma TERMINATOR AssignObj'</span>,<span class="hljs-function">               -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'AssignList OptComma INDENT AssignList OptComma OUTDENT'</span>,<span class="hljs-function"> -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">4</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <p>类定义包含可选的原型属性赋值, 和可选的到超类的引用.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Class</span>: [
+    o <span class="hljs-string">'CLASS'</span>,<span class="hljs-function">                                           -&gt;</span> <span class="hljs-keyword">new</span> Class
+    o <span class="hljs-string">'CLASS Block'</span>,<span class="hljs-function">                                     -&gt;</span> <span class="hljs-keyword">new</span> Class <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'CLASS EXTENDS Expression'</span>,<span class="hljs-function">                        -&gt;</span> <span class="hljs-keyword">new</span> Class <span class="hljs-literal">null</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'CLASS EXTENDS Expression Block'</span>,<span class="hljs-function">                  -&gt;</span> <span class="hljs-keyword">new</span> Class <span class="hljs-literal">null</span>, $<span class="hljs-number">3</span>, $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'CLASS SimpleAssignable'</span>,<span class="hljs-function">                          -&gt;</span> <span class="hljs-keyword">new</span> Class $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'CLASS SimpleAssignable Block'</span>,<span class="hljs-function">                    -&gt;</span> <span class="hljs-keyword">new</span> Class $<span class="hljs-number">2</span>, <span class="hljs-literal">null</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'CLASS SimpleAssignable EXTENDS Expression'</span>,<span class="hljs-function">       -&gt;</span> <span class="hljs-keyword">new</span> Class $<span class="hljs-number">2</span>, $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'CLASS SimpleAssignable EXTENDS Expression Block'</span>,<span class="hljs-function"> -&gt;</span> <span class="hljs-keyword">new</span> Class $<span class="hljs-number">2</span>, $<span class="hljs-number">4</span>, $<span class="hljs-number">5</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
+              </div>
+              <p>一般函数调用, 或者链式函数调用.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Invocation</span>: [
+    o <span class="hljs-string">'Value OptFuncExist Arguments'</span>,<span class="hljs-function">           -&gt;</span> <span class="hljs-keyword">new</span> Call $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'Invocation OptFuncExist Arguments'</span>,<span class="hljs-function">      -&gt;</span> <span class="hljs-keyword">new</span> Call $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'SUPER'</span>,<span class="hljs-function">                                  -&gt;</span> <span class="hljs-keyword">new</span> Call <span class="hljs-string">'super'</span>, [<span class="hljs-keyword">new</span> Splat <span class="hljs-keyword">new</span> Literal <span class="hljs-string">'arguments'</span>]
+    o <span class="hljs-string">'SUPER Arguments'</span>,<span class="hljs-function">                        -&gt;</span> <span class="hljs-keyword">new</span> Call <span class="hljs-string">'super'</span>, $<span class="hljs-number">2</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <p>可选的函数存在性检查.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">OptFuncExist</span>: [
+    o <span class="hljs-string">''</span>,<span class="hljs-function">                                       -&gt;</span> <span class="hljs-literal">no</span>
+    o <span class="hljs-string">'FUNC_EXIST'</span>,<span class="hljs-function">                             -&gt;</span> <span class="hljs-literal">yes</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-42">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-42">&#182;</a>
+              </div>
+              <p>函数调用的参数列表.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Arguments</span>: [
+    o <span class="hljs-string">'CALL_START CALL_END'</span>,<span class="hljs-function">                    -&gt;</span> []
+    o <span class="hljs-string">'CALL_START ArgList OptComma CALL_END'</span>,<span class="hljs-function">   -&gt;</span> $<span class="hljs-number">2</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              <p>对当前对象 <em>this</em> 的引用.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">This</span>: [
+    o <span class="hljs-string">'THIS'</span>,<span class="hljs-function">                                   -&gt;</span> <span class="hljs-keyword">new</span> Value <span class="hljs-keyword">new</span> Literal <span class="hljs-string">'this'</span>
+    o <span class="hljs-string">'@'</span>,<span class="hljs-function">                                      -&gt;</span> <span class="hljs-keyword">new</span> Value <span class="hljs-keyword">new</span> Literal <span class="hljs-string">'this'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-44">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-44">&#182;</a>
+              </div>
+              <p>对 <em>this</em> 的属性的引用.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">ThisProperty</span>: [
+    o <span class="hljs-string">'@ Identifier'</span>,<span class="hljs-function">                           -&gt;</span> <span class="hljs-keyword">new</span> Value LOC(<span class="hljs-number">1</span>)(<span class="hljs-keyword">new</span> Literal(<span class="hljs-string">'this'</span>)), [LOC(<span class="hljs-number">2</span>)(<span class="hljs-keyword">new</span> Access($<span class="hljs-number">2</span>))], <span class="hljs-string">'this'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-45">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-45">&#182;</a>
+              </div>
+              <p>数组字面量.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Array</span>: [
+    o <span class="hljs-string">'[ ]'</span>,<span class="hljs-function">                                    -&gt;</span> <span class="hljs-keyword">new</span> Arr []
+    o <span class="hljs-string">'[ ArgList OptComma ]'</span>,<span class="hljs-function">                   -&gt;</span> <span class="hljs-keyword">new</span> Arr $<span class="hljs-number">2</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-46">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <p>inclusive 和 exclusive 范围.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">RangeDots</span>: [
+    o <span class="hljs-string">'..'</span>,<span class="hljs-function">                                     -&gt;</span> <span class="hljs-string">'inclusive'</span>
+    o <span class="hljs-string">'...'</span>,<span class="hljs-function">                                    -&gt;</span> <span class="hljs-string">'exclusive'</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-47">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-47">&#182;</a>
+              </div>
+              <p>CoffeeScript 范围字面量.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Range</span>: [
+    o <span class="hljs-string">'[ Expression RangeDots Expression ]'</span>,<span class="hljs-function">    -&gt;</span> <span class="hljs-keyword">new</span> Range $<span class="hljs-number">2</span>, $<span class="hljs-number">4</span>, $<span class="hljs-number">3</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-48">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-48">&#182;</a>
+              </div>
+              <p>数组切片字面量.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Slice</span>: [
+    o <span class="hljs-string">'Expression RangeDots Expression'</span>,<span class="hljs-function">        -&gt;</span> <span class="hljs-keyword">new</span> Range $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'Expression RangeDots'</span>,<span class="hljs-function">                   -&gt;</span> <span class="hljs-keyword">new</span> Range $<span class="hljs-number">1</span>, <span class="hljs-literal">null</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'RangeDots Expression'</span>,<span class="hljs-function">                   -&gt;</span> <span class="hljs-keyword">new</span> Range <span class="hljs-literal">null</span>, $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'RangeDots'</span>,<span class="hljs-function">                              -&gt;</span> <span class="hljs-keyword">new</span> Range <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-49">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-49">&#182;</a>
+              </div>
+              <p><strong>ArgList</strong> 既可以是传给函数调用的对象列表, 又可以作为数组字面量的内容
+(特别是逗号分隔的表达式). 新行分隔也可以.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">ArgList</span>: [
+    o <span class="hljs-string">'Arg'</span>,<span class="hljs-function">                                              -&gt;</span> [$<span class="hljs-number">1</span>]
+    o <span class="hljs-string">'ArgList , Arg'</span>,<span class="hljs-function">                                    -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'ArgList OptComma TERMINATOR Arg'</span>,<span class="hljs-function">                  -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'INDENT ArgList OptComma OUTDENT'</span>,<span class="hljs-function">                  -&gt;</span> $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'ArgList OptComma INDENT ArgList OptComma OUTDENT'</span>,<span class="hljs-function"> -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">4</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-50">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-50">&#182;</a>
+              </div>
+              <p>块或者 Splat 都是合法的参数.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Arg</span>: [
+    o <span class="hljs-string">'Expression'</span>
+    o <span class="hljs-string">'Splat'</span>
+    o <span class="hljs-string">'...'</span>,<span class="hljs-function">                                     -&gt;</span> <span class="hljs-keyword">new</span> Expansion
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-51">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-51">&#182;</a>
+              </div>
+              <p>简单的, 逗号分隔的, 必须的参数 (没华丽的语法). 为了使这个规则可以在不支持多行的 <strong>Switch</strong> 块中使用, 我们把它和 <strong>ArgList</strong> 分离开来.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">SimpleArgs</span>: [
+    o <span class="hljs-string">'Expression'</span>
+    o <span class="hljs-string">'SimpleArgs , Expression'</span>,<span class="hljs-function">                -&gt;</span> [].concat $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-52">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-52">&#182;</a>
+              </div>
+              <p><em>try/catch/finally</em> 异常处理块的各变种.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Try</span>: [
+    o <span class="hljs-string">'TRY Block'</span>,<span class="hljs-function">                              -&gt;</span> <span class="hljs-keyword">new</span> Try $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'TRY Block Catch'</span>,<span class="hljs-function">                        -&gt;</span> <span class="hljs-keyword">new</span> Try $<span class="hljs-number">2</span>, $<span class="hljs-number">3</span>[<span class="hljs-number">0</span>], $<span class="hljs-number">3</span>[<span class="hljs-number">1</span>]
+    o <span class="hljs-string">'TRY Block FINALLY Block'</span>,<span class="hljs-function">                -&gt;</span> <span class="hljs-keyword">new</span> Try $<span class="hljs-number">2</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'TRY Block Catch FINALLY Block'</span>,<span class="hljs-function">          -&gt;</span> <span class="hljs-keyword">new</span> Try $<span class="hljs-number">2</span>, $<span class="hljs-number">3</span>[<span class="hljs-number">0</span>], $<span class="hljs-number">3</span>[<span class="hljs-number">1</span>], $<span class="hljs-number">5</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-53">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-53">&#182;</a>
+              </div>
+              <p>catch 子句把赋给异常对象一个名字并执行代码块.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Catch</span>: [
+    o <span class="hljs-string">'CATCH Identifier Block'</span>,<span class="hljs-function">                 -&gt;</span> [$<span class="hljs-number">2</span>, $<span class="hljs-number">3</span>]
+    o <span class="hljs-string">'CATCH Object Block'</span>,<span class="hljs-function">                     -&gt;</span> [LOC(<span class="hljs-number">2</span>)(<span class="hljs-keyword">new</span> Value($<span class="hljs-number">2</span>)), $<span class="hljs-number">3</span>]
+    o <span class="hljs-string">'CATCH Block'</span>,<span class="hljs-function">                            -&gt;</span> [<span class="hljs-literal">null</span>, $<span class="hljs-number">2</span>]
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-54">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-54">&#182;</a>
+              </div>
+              <p>抛出一个异常对象.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Throw</span>: [
+    o <span class="hljs-string">'THROW Expression'</span>,<span class="hljs-function">                       -&gt;</span> <span class="hljs-keyword">new</span> Throw $<span class="hljs-number">2</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-55">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-55">&#182;</a>
+              </div>
+              <p>括号表达式. 注意 <strong>Parenthetical</strong> 是个 <strong>Value</strong> 而不是 <strong>Expression</strong>,
+所以如果你要把表达式放到一个仅接受值的地方, 总用括号包起来就可以了.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Parenthetical</span>: [
+    o <span class="hljs-string">'( Body )'</span>,<span class="hljs-function">                               -&gt;</span> <span class="hljs-keyword">new</span> Parens $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'( INDENT Body OUTDENT )'</span>,<span class="hljs-function">                -&gt;</span> <span class="hljs-keyword">new</span> Parens $<span class="hljs-number">3</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-56">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-56">&#182;</a>
+              </div>
+              <p>while 循环的条件部分.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">WhileSource</span>: [
+    o <span class="hljs-string">'WHILE Expression'</span>,<span class="hljs-function">                       -&gt;</span> <span class="hljs-keyword">new</span> While $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'WHILE Expression WHEN Expression'</span>,<span class="hljs-function">       -&gt;</span> <span class="hljs-keyword">new</span> While $<span class="hljs-number">2</span>, <span class="hljs-attribute">guard</span>: $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'UNTIL Expression'</span>,<span class="hljs-function">                       -&gt;</span> <span class="hljs-keyword">new</span> While $<span class="hljs-number">2</span>, <span class="hljs-attribute">invert</span>: <span class="hljs-literal">true</span>
+    o <span class="hljs-string">'UNTIL Expression WHEN Expression'</span>,<span class="hljs-function">       -&gt;</span> <span class="hljs-keyword">new</span> While $<span class="hljs-number">2</span>, <span class="hljs-attribute">invert</span>: <span class="hljs-literal">true</span>, <span class="hljs-attribute">guard</span>: $<span class="hljs-number">4</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-57">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-57">&#182;</a>
+              </div>
+              <p>while 循环一般带个待执行的表达式块, 也可以是后缀式地加到一个表达式后. 没有 do..while.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">While</span>: [
+    o <span class="hljs-string">'WhileSource Block'</span>,<span class="hljs-function">                      -&gt;</span> $<span class="hljs-number">1.</span>addBody $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'Statement  WhileSource'</span>,<span class="hljs-function">                 -&gt;</span> $<span class="hljs-number">2.</span>addBody LOC(<span class="hljs-number">1</span>) Block.wrap([$<span class="hljs-number">1</span>])
+    o <span class="hljs-string">'Expression WhileSource'</span>,<span class="hljs-function">                 -&gt;</span> $<span class="hljs-number">2.</span>addBody LOC(<span class="hljs-number">1</span>) Block.wrap([$<span class="hljs-number">1</span>])
+    o <span class="hljs-string">'Loop'</span>,<span class="hljs-function">                                   -&gt;</span> $<span class="hljs-number">1</span>
+  ]
+
+  <span class="hljs-attribute">Loop</span>: [
+    o <span class="hljs-string">'LOOP Block'</span>,<span class="hljs-function">                             -&gt;</span> <span class="hljs-keyword">new</span> While(LOC(<span class="hljs-number">1</span>) <span class="hljs-keyword">new</span> Literal <span class="hljs-string">'true'</span>).addBody $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'LOOP Expression'</span>,<span class="hljs-function">                        -&gt;</span> <span class="hljs-keyword">new</span> While(LOC(<span class="hljs-number">1</span>) <span class="hljs-keyword">new</span> Literal <span class="hljs-string">'true'</span>).addBody LOC(<span class="hljs-number">2</span>) Block.wrap [$<span class="hljs-number">2</span>]
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-58">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-58">&#182;</a>
+              </div>
+              <p>数组, 对象和范围 comprehension 的一般写法.
+Comprehension 一般带个代执行的表达式块, 也可以是后缀式地加到一个表达式后.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">For</span>: [
+    o <span class="hljs-string">'Statement  ForBody'</span>,<span class="hljs-function">                     -&gt;</span> <span class="hljs-keyword">new</span> For $<span class="hljs-number">1</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'Expression ForBody'</span>,<span class="hljs-function">                     -&gt;</span> <span class="hljs-keyword">new</span> For $<span class="hljs-number">1</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'ForBody    Block'</span>,<span class="hljs-function">                       -&gt;</span> <span class="hljs-keyword">new</span> For $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>
+  ]
+
+  <span class="hljs-attribute">ForBody</span>: [
+    o <span class="hljs-string">'FOR Range'</span>,<span class="hljs-function">                              -&gt;</span> <span class="hljs-attribute">source</span>: LOC(<span class="hljs-number">2</span>) <span class="hljs-keyword">new</span> Value($<span class="hljs-number">2</span>)
+    o <span class="hljs-string">'ForStart ForSource'</span>,<span class="hljs-function">                     -&gt;</span> $<span class="hljs-number">2.</span>own = $<span class="hljs-number">1.</span>own; $<span class="hljs-number">2.</span>name = $<span class="hljs-number">1</span>[<span class="hljs-number">0</span>]; $<span class="hljs-number">2.</span>index = $<span class="hljs-number">1</span>[<span class="hljs-number">1</span>]; $<span class="hljs-number">2</span>
+  ]
+
+  <span class="hljs-attribute">ForStart</span>: [
+    o <span class="hljs-string">'FOR ForVariables'</span>,<span class="hljs-function">                       -&gt;</span> $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'FOR OWN ForVariables'</span>,<span class="hljs-function">                   -&gt;</span> $<span class="hljs-number">3.</span>own = <span class="hljs-literal">yes</span>; $<span class="hljs-number">3</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-59">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-59">&#182;</a>
+              </div>
+              <p>循环中的一个变量, 取于数组中满足条件的值. 支持模式匹配.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">ForValue</span>: [
+    o <span class="hljs-string">'Identifier'</span>
+    o <span class="hljs-string">'ThisProperty'</span>
+    o <span class="hljs-string">'Array'</span>,<span class="hljs-function">                                  -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'Object'</span>,<span class="hljs-function">                                 -&gt;</span> <span class="hljs-keyword">new</span> Value $<span class="hljs-number">1</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-60">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-60">&#182;</a>
+              </div>
+              <p>一个数组或者范围 comprehension 包含对应当前元素的变量, 和 (可选的) 对当前下标的引用.
+在对象 comprehension 的情况下, 则是 <em>key, value</em>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">ForVariables</span>: [
+    o <span class="hljs-string">'ForValue'</span>,<span class="hljs-function">                               -&gt;</span> [$<span class="hljs-number">1</span>]
+    o <span class="hljs-string">'ForValue , ForValue'</span>,<span class="hljs-function">                    -&gt;</span> [$<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>]
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-61">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-61">&#182;</a>
+              </div>
+              <p>comprehension 的源是个数组或者对象, 带可选的 guard 从句. 如果是数组 comprehension, 你还可以选择固定间隔的步进.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">ForSource</span>: [
+    o <span class="hljs-string">'FORIN Expression'</span>,<span class="hljs-function">                               -&gt;</span> <span class="hljs-attribute">source</span>: $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'FOROF Expression'</span>,<span class="hljs-function">                               -&gt;</span> <span class="hljs-attribute">source</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">object</span>: <span class="hljs-literal">yes</span>
+    o <span class="hljs-string">'FORIN Expression WHEN Expression'</span>,<span class="hljs-function">               -&gt;</span> <span class="hljs-attribute">source</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">guard</span>: $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'FOROF Expression WHEN Expression'</span>,<span class="hljs-function">               -&gt;</span> <span class="hljs-attribute">source</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">guard</span>: $<span class="hljs-number">4</span>, <span class="hljs-attribute">object</span>: <span class="hljs-literal">yes</span>
+    o <span class="hljs-string">'FORIN Expression BY Expression'</span>,<span class="hljs-function">                 -&gt;</span> <span class="hljs-attribute">source</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">step</span>:  $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'FORIN Expression WHEN Expression BY Expression'</span>,<span class="hljs-function"> -&gt;</span> <span class="hljs-attribute">source</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">guard</span>: $<span class="hljs-number">4</span>, <span class="hljs-attribute">step</span>: $<span class="hljs-number">6</span>
+    o <span class="hljs-string">'FORIN Expression BY Expression WHEN Expression'</span>,<span class="hljs-function"> -&gt;</span> <span class="hljs-attribute">source</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">step</span>:  $<span class="hljs-number">4</span>, <span class="hljs-attribute">guard</span>: $<span class="hljs-number">6</span>
+  ]
+
+  <span class="hljs-attribute">Switch</span>: [
+    o <span class="hljs-string">'SWITCH Expression INDENT Whens OUTDENT'</span>,<span class="hljs-function">            -&gt;</span> <span class="hljs-keyword">new</span> Switch $<span class="hljs-number">2</span>, $<span class="hljs-number">4</span>
+    o <span class="hljs-string">'SWITCH Expression INDENT Whens ELSE Block OUTDENT'</span>,<span class="hljs-function"> -&gt;</span> <span class="hljs-keyword">new</span> Switch $<span class="hljs-number">2</span>, $<span class="hljs-number">4</span>, $<span class="hljs-number">6</span>
+    o <span class="hljs-string">'SWITCH INDENT Whens OUTDENT'</span>,<span class="hljs-function">                       -&gt;</span> <span class="hljs-keyword">new</span> Switch <span class="hljs-literal">null</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'SWITCH INDENT Whens ELSE Block OUTDENT'</span>,<span class="hljs-function">            -&gt;</span> <span class="hljs-keyword">new</span> Switch <span class="hljs-literal">null</span>, $<span class="hljs-number">3</span>, $<span class="hljs-number">5</span>
+  ]
+
+  <span class="hljs-attribute">Whens</span>: [
+    o <span class="hljs-string">'When'</span>
+    o <span class="hljs-string">'Whens When'</span>,<span class="hljs-function">                             -&gt;</span> $<span class="hljs-number">1.</span>concat $<span class="hljs-number">2</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-62">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-62">&#182;</a>
+              </div>
+              <p>单独的 <strong>When</strong> 从句, 带动作.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">When</span>: [
+    o <span class="hljs-string">'LEADING_WHEN SimpleArgs Block'</span>,<span class="hljs-function">            -&gt;</span> [[$<span class="hljs-number">2</span>, $<span class="hljs-number">3</span>]]
+    o <span class="hljs-string">'LEADING_WHEN SimpleArgs Block TERMINATOR'</span>,<span class="hljs-function"> -&gt;</span> [[$<span class="hljs-number">2</span>, $<span class="hljs-number">3</span>]]
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-63">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-63">&#182;</a>
+              </div>
+              <p>最基本的 <em>if</em> 只含条件和动作. 下面把 if 相关的规则拆分开来, 是为了避免二义性.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">IfBlock</span>: [
+    o <span class="hljs-string">'IF Expression Block'</span>,<span class="hljs-function">                    -&gt;</span> <span class="hljs-keyword">new</span> If $<span class="hljs-number">2</span>, $<span class="hljs-number">3</span>, <span class="hljs-attribute">type</span>: $<span class="hljs-number">1</span>
+    o <span class="hljs-string">'IfBlock ELSE IF Expression Block'</span>,<span class="hljs-function">       -&gt;</span> $<span class="hljs-number">1.</span>addElse LOC(<span class="hljs-number">3</span>,<span class="hljs-number">5</span>) <span class="hljs-keyword">new</span> If $<span class="hljs-number">4</span>, $<span class="hljs-number">5</span>, <span class="hljs-attribute">type</span>: $<span class="hljs-number">3</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-64">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-64">&#182;</a>
+              </div>
+              <p>其他 <em>if</em> 表达式的形式, 包含后缀式一行流的 <em>if</em> 和 <em>unless</em>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">If</span>: [
+    o <span class="hljs-string">'IfBlock'</span>
+    o <span class="hljs-string">'IfBlock ELSE Block'</span>,<span class="hljs-function">                     -&gt;</span> $<span class="hljs-number">1.</span>addElse $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Statement  POST_IF Expression'</span>,<span class="hljs-function">          -&gt;</span> <span class="hljs-keyword">new</span> If $<span class="hljs-number">3</span>, LOC(<span class="hljs-number">1</span>)(Block.wrap [$<span class="hljs-number">1</span>]), <span class="hljs-attribute">type</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">statement</span>: <span class="hljs-literal">true</span>
+    o <span class="hljs-string">'Expression POST_IF Expression'</span>,<span class="hljs-function">          -&gt;</span> <span class="hljs-keyword">new</span> If $<span class="hljs-number">3</span>, LOC(<span class="hljs-number">1</span>)(Block.wrap [$<span class="hljs-number">1</span>]), <span class="hljs-attribute">type</span>: $<span class="hljs-number">2</span>, <span class="hljs-attribute">statement</span>: <span class="hljs-literal">true</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-65">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-65">&#182;</a>
+              </div>
+              <p>算术和逻辑操作符, 作用于 1 个或者多个操作数(operand).
+这里把它们按优先级分组. 确切的优先级规则在页低给出.
+如果我们可以把大部分都归结到一个泛化的 <em>Operand OpSymbol Operand</em> 形式的规则, 这个定义就可以短很多.
+但为了使优先级生效, 就得分别定义了.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-attribute">Operation</span>: [
+    o <span class="hljs-string">'UNARY Expression'</span>,<span class="hljs-function">                       -&gt;</span> <span class="hljs-keyword">new</span> Op $<span class="hljs-number">1</span> , $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'UNARY_MATH Expression'</span>,<span class="hljs-function">                  -&gt;</span> <span class="hljs-keyword">new</span> Op $<span class="hljs-number">1</span> , $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'-     Expression'</span>,                      (<span class="hljs-function">-&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'-'</span>, $<span class="hljs-number">2</span>), <span class="hljs-attribute">prec</span>: <span class="hljs-string">'UNARY_MATH'</span>
+    o <span class="hljs-string">'+     Expression'</span>,                      (<span class="hljs-function">-&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'+'</span>, $<span class="hljs-number">2</span>), <span class="hljs-attribute">prec</span>: <span class="hljs-string">'UNARY_MATH'</span>
+
+    o <span class="hljs-string">'-- SimpleAssignable'</span>,<span class="hljs-function">                    -&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'--'</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'++ SimpleAssignable'</span>,<span class="hljs-function">                    -&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'++'</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'SimpleAssignable --'</span>,<span class="hljs-function">                    -&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'--'</span>, $<span class="hljs-number">1</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">true</span>
+    o <span class="hljs-string">'SimpleAssignable ++'</span>,<span class="hljs-function">                    -&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'++'</span>, $<span class="hljs-number">1</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">true</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-66">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-66">&#182;</a>
+              </div>
+              <p><a href="http://coffee-js.github.io/coffee-script/#existence">存在性操作符</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    o <span class="hljs-string">'Expression ?'</span>,<span class="hljs-function">                           -&gt;</span> <span class="hljs-keyword">new</span> Existence $<span class="hljs-number">1</span>
+
+    o <span class="hljs-string">'Expression +  Expression'</span>,<span class="hljs-function">               -&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'+'</span> , $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Expression -  Expression'</span>,<span class="hljs-function">               -&gt;</span> <span class="hljs-keyword">new</span> Op <span class="hljs-string">'-'</span> , $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+
+    o <span class="hljs-string">'Expression MATH     Expression'</span>,<span class="hljs-function">         -&gt;</span> <span class="hljs-keyword">new</span> Op $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Expression **       Expression'</span>,<span class="hljs-function">         -&gt;</span> <span class="hljs-keyword">new</span> Op $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Expression SHIFT    Expression'</span>,<span class="hljs-function">         -&gt;</span> <span class="hljs-keyword">new</span> Op $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Expression COMPARE  Expression'</span>,<span class="hljs-function">         -&gt;</span> <span class="hljs-keyword">new</span> Op $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Expression LOGIC    Expression'</span>,<span class="hljs-function">         -&gt;</span> <span class="hljs-keyword">new</span> Op $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+    o <span class="hljs-string">'Expression RELATION Expression'</span>,<span class="hljs-function">         -&gt;</span>
+      <span class="hljs-keyword">if</span> $<span class="hljs-number">2.</span>charAt(<span class="hljs-number">0</span>) <span class="hljs-keyword">is</span> <span class="hljs-string">'!'</span>
+        <span class="hljs-keyword">new</span> Op($<span class="hljs-number">2</span>[<span class="hljs-number">1.</span>.], $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>).invert()
+      <span class="hljs-keyword">else</span>
+        <span class="hljs-keyword">new</span> Op $<span class="hljs-number">2</span>, $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+
+    o <span class="hljs-string">'SimpleAssignable COMPOUND_ASSIGN
+       Expression'</span>,<span class="hljs-function">                             -&gt;</span> <span class="hljs-keyword">new</span> Assign $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'SimpleAssignable COMPOUND_ASSIGN
+       INDENT Expression OUTDENT'</span>,<span class="hljs-function">              -&gt;</span> <span class="hljs-keyword">new</span> Assign $<span class="hljs-number">1</span>, $<span class="hljs-number">4</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'SimpleAssignable COMPOUND_ASSIGN TERMINATOR
+       Expression'</span>,<span class="hljs-function">                             -&gt;</span> <span class="hljs-keyword">new</span> Assign $<span class="hljs-number">1</span>, $<span class="hljs-number">4</span>, $<span class="hljs-number">2</span>
+    o <span class="hljs-string">'SimpleAssignable EXTENDS Expression'</span>,<span class="hljs-function">    -&gt;</span> <span class="hljs-keyword">new</span> Extends $<span class="hljs-number">1</span>, $<span class="hljs-number">3</span>
+  ]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-67">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-67">&#182;</a>
+              </div>
+              <h2 id="-">优先级</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-68">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-68">&#182;</a>
+              </div>
+              
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-69">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-69">&#182;</a>
+              </div>
+              <p>在上面的操作符比下面的操作符优先级更高. 下面的规则使得 <code>2 + 3 * 4</code> 解析成:</p>
+<pre><code><span class="hljs-number">2</span> + (<span class="hljs-number">3</span> * <span class="hljs-number">4</span>)
+</code></pre><p>而不是:</p>
+<pre><code>(<span class="hljs-number">2</span> + <span class="hljs-number">3</span>) * <span class="hljs-number">4</span>
+</code></pre>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>operators = [
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'.'</span>, <span class="hljs-string">'?.'</span>, <span class="hljs-string">'::'</span>, <span class="hljs-string">'?::'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'CALL_START'</span>, <span class="hljs-string">'CALL_END'</span>]
+  [<span class="hljs-string">'nonassoc'</span>,  <span class="hljs-string">'++'</span>, <span class="hljs-string">'--'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'?'</span>]
+  [<span class="hljs-string">'right'</span>,     <span class="hljs-string">'UNARY'</span>]
+  [<span class="hljs-string">'right'</span>,     <span class="hljs-string">'**'</span>]
+  [<span class="hljs-string">'right'</span>,     <span class="hljs-string">'UNARY_MATH'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'MATH'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'+'</span>, <span class="hljs-string">'-'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'SHIFT'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'RELATION'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'COMPARE'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'LOGIC'</span>]
+  [<span class="hljs-string">'nonassoc'</span>,  <span class="hljs-string">'INDENT'</span>, <span class="hljs-string">'OUTDENT'</span>]
+  [<span class="hljs-string">'right'</span>,     <span class="hljs-string">'='</span>, <span class="hljs-string">':'</span>, <span class="hljs-string">'COMPOUND_ASSIGN'</span>, <span class="hljs-string">'RETURN'</span>, <span class="hljs-string">'THROW'</span>, <span class="hljs-string">'EXTENDS'</span>]
+  [<span class="hljs-string">'right'</span>,     <span class="hljs-string">'FORIN'</span>, <span class="hljs-string">'FOROF'</span>, <span class="hljs-string">'BY'</span>, <span class="hljs-string">'WHEN'</span>]
+  [<span class="hljs-string">'right'</span>,     <span class="hljs-string">'IF'</span>, <span class="hljs-string">'ELSE'</span>, <span class="hljs-string">'FOR'</span>, <span class="hljs-string">'WHILE'</span>, <span class="hljs-string">'UNTIL'</span>, <span class="hljs-string">'LOOP'</span>, <span class="hljs-string">'SUPER'</span>, <span class="hljs-string">'CLASS'</span>]
+  [<span class="hljs-string">'left'</span>,      <span class="hljs-string">'POST_IF'</span>]
+]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-70">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-70">&#182;</a>
+              </div>
+              <h2 id="-">包装</h2>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-71">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-71">&#182;</a>
+              </div>
+              
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-72">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-72">&#182;</a>
+              </div>
+              <p>既然 <strong>语法</strong> 和 <strong>操作符</strong> 都有了, 我们终于可以创建 <strong>Jison.Parser</strong> 了.
+我们的做法是遍历所有规则, 把全部终结符 (不在上面的规则中的符号) 标记记为 “token”.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>tokens = []
+<span class="hljs-keyword">for</span> name, alternatives <span class="hljs-keyword">of</span> grammar
+  grammar[name] = <span class="hljs-keyword">for</span> alt <span class="hljs-keyword">in</span> alternatives
+    <span class="hljs-keyword">for</span> token <span class="hljs-keyword">in</span> alt[<span class="hljs-number">0</span>].split <span class="hljs-string">' '</span>
+      tokens.push token <span class="hljs-keyword">unless</span> grammar[token]
+    alt[<span class="hljs-number">1</span>] = <span class="hljs-string">"return <span class="hljs-subst">#{alt[<span class="hljs-number">1</span>]}</span>"</span> <span class="hljs-keyword">if</span> name <span class="hljs-keyword">is</span> <span class="hljs-string">'Root'</span>
+    alt</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-73">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-73">&#182;</a>
+              </div>
+              <p>用 <strong>token</strong> 终结符和 <strong>grammar</strong> 规则初始化 <strong>Parser</strong>, 并指定根规则.
+这里还逆序排列了操作符列表, 因为 Jison 需要从低到高的优先级排列操作符,
+而我们的定义顺序是从高到低 (和 <a href="http://dinosaur.compilertools.net/yacc/index.html">Yacc</a> 一样).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-built_in">exports</span>.parser = <span class="hljs-keyword">new</span> Parser
+  tokens      : tokens.join <span class="hljs-string">' '</span>
+  bnf         : grammar
+  operators   : operators.reverse()
+  startSymbol : <span class="hljs-string">'Root'</span></pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

@@ -1,1 +1,56 @@
-<script src="theme/options.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title id="options-page-title">谷歌访问助手设置</title>
+    <script src="theme/options.js"></script>
+</head>
+<body>
+<div id="content">
+    <div id="content-wrap" class="form-horizontal">
+        <div class="form-group">
+            <p class="tips">如果已经设置浏览器主页后仍然无效，可以启用此选项自动打开主页，保证扩展激活</p>
+            <label class="col-sm-2 control-label">
+                主页设置:
+            </label>
+            <div class="col-sm-10">
+                <div class="checkbox">
+                    <label>
+                        <input id="auto-open-homepage" type="checkbox"> 自动打开主页
+                    </label>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="choose-homepage" class="form-group">
+            <div class="col-sm-offset col-sm-10">
+
+                <div>
+                    <label>选择下面其中一个网址为主页</label>
+                </div>
+
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="homepage" class="homepage" value="http://123.hao245.com" checked>
+                        http://123.hao245.com
+                    </label>
+                </div>
+
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="homepage" class="homepage" value="http://360.hao245.com">
+                        http://360.hao245.com
+                    </label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div> <!-- end of content div -->
+
+<div class="footer"><a id="footer-homepage" href="http://translate.google.com/"></a></div>
+
+</body>
+</html>

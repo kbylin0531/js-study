@@ -39,6 +39,7 @@
                 configurable: false
             });
         }
+
         injectFunction(inject_init);
     }
 
@@ -101,8 +102,6 @@
                 cleanTheLink(a);
         }, true);
     }
-
-
 
     if(window.location.hostname.indexOf('google.com')>0){
         main();

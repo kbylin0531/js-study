@@ -2044,21 +2044,19 @@ define("lib/t", [], function (d, t, n) {
     n.exports = r
 });
 define("app/t", [], function (d, t) {
-    var n = d("lib/z"), r = d("app/u"), w = d("app/b"), p = d("lib/u"), m = d("lib/t"), u = m.M(r.info.appID + r.info.locale), v, C, A = {redirects: []},
-        b = function (rule) {
-            rule || console.error("603 - 规则无法为空");
-            A = JSON.parse(rule);
-            rule = A.redirects;
-            A.redirects = [];
-            for (var x in rule) {
-                var r = rule[x];
-                A.redirects.push({
-                    r:new RegExp(r.r),
-                    t:new RegExp(r.t),
-                    s:r.s
-                });
-            }
-        };
+    var n = d("lib/z"), r = d("app/u"), w = d("app/b"), p = d("lib/u"), m = d("lib/t"), u = m.M(r.info.appID + r.info.locale), v, C, A = {redirects: []}, b = function (b) {
+        b || console.error("603 - Rule String is null");
+        A = JSON.parse(b);
+        b = A.redirects;
+        A.redirects = [];
+        for (var d in b) {
+            var f = {};
+            f.r = new RegExp(b[d].r);
+            f.t = new RegExp(b[d].t);
+            f.s = b[d].s;
+            A.redirects.push(f)
+        }
+    };
     t.S = function (b, d, f) {
         var g = [];
         g.push(b);
@@ -2097,7 +2095,7 @@ define("app/t", [], function (d, t) {
                 try {
                     b(m.D(f[2], m.P(f[0], f[1]))), d()
                 } catch (g) {
-                    console.error("605 - json parse rule file error " + g), w.off("!", "错误：扩展发生错误"), h()
+                    console.error("605 - json parse rule file error " + g), w.off("!", "\u9519\u8bef\uff1a\u6269\u5c55\u53d1\u751f\u9519\u8bef"), h()
                 }
             }, function () {
                 v = m.G();
@@ -2166,7 +2164,8 @@ define("app/t", [], function (d, t) {
     };
     t.F = function (b, d) {
         var f = localStorage.Installed;
-        f ? p.isFunction(d) && d(parseInt(f)) : (localStorage.Installed = Date.now(), p.isFunction(b) && b())
+        f ? p.isFunction(d) && d(parseInt(f)) : (localStorage.Installed = Date.now(),
+        p.isFunction(b) && b())
     };
     t.RT = function () {
         chrome.tabs.query({}, function (b) {
@@ -2220,21 +2219,21 @@ define("app/b", [], function (d, t) {
         warming: "",
         tips: "\u4ea4\u6d41QQ\u7fa4\uff1a176080917"
     };
-    var title =  "Google Access Assistant";
     localStorage["popup-message"] && (window.popupView.tips = localStorage["popup-message"]);
     t.off = function (d, r, t, p) {
         window.popupView.warming = r;
         t || (t = "#ff0000");
-        chrome.browserAction.setIcon({path: "/icons/inactive.png"});/*显示为未激活状态*/
+        p || (p = "\u8c37\u6b4c\u8bbf\u95ee\u52a9\u624b");
+        chrome.browserAction.setIcon({path: "/icons/inactive.png"});
         chrome.browserAction.setBadgeText({text: d});
         chrome.browserAction.setBadgeBackgroundColor({color: t});
-        chrome.browserAction.setTitle({title: p || title});
+        chrome.browserAction.setTitle({title: p});
         window.popupView.status = "off"
     };
     t.on = function (d) {
-        chrome.browserAction.setIcon({path: "/icons/icon.png"});/*显示为激活状态*/
+        chrome.browserAction.setIcon({path: "/icons/icon.png"});
         chrome.browserAction.setBadgeText({text: ""});
-        chrome.browserAction.setTitle({title: title});
+        chrome.browserAction.setTitle({title: "\u8c37\u6b4c\u8bbf\u95ee\u52a9\u624b"});
         window.popupView.status = "on";
         window.popupView.speed = d
     };
@@ -2339,7 +2338,7 @@ define("app/p", [], function (d, t) {
         })
     }, q = function () {
         1728E5 <
-        Date.now() - v ? (w.off("!", "\u8fde\u7eed\u4f7f\u7528\u670d\u52a1\u8d85\u8fc724\u5c0f\u65f6\uff0c<br>\u9700\u8981\u91cd\u542f\u6d4f\u89c8\u5668\u624d\u80fd\u91cd\u65b0\u4f7f\u7528"), console.log("expired"), chrome.proxy.settings.set({
+        Date.now() - v ? (w.off("!", "连续使用服务超过24小时，<br>需要重启浏览器才能重新使用"), console.log("expired"), chrome.proxy.settings.set({
             value: {mode: "system"},
             scope: "regular"
         }, function () {
@@ -2365,15 +2364,15 @@ define("app/p", [], function (d, t) {
                     console.error("[feedback: choose backupProxy]," + b)
                 }
             })) : console.log((new Date).toString(), "[choose]chooseNormal!")
-        }), setTimeout(q, 18E5))
-    }, F = !1, G = function () {
-        chrome.proxy.settings.get({incognito: !1},
-            function (b) {
-                "controllable_by_this_extension" === b.levelOfControl || "controlled_by_this_extension" === b.levelOfControl ? (localStorage.DEBUG && console.info("[proxy controlled by ggfwzs!]"), F && (w.on(), F = !1)) : "controlled_by_other_extensions" === b.levelOfControl ? (localStorage.DEBUG && console.info("[proxy controlled by other extension!]"), w.off("!", "\u4ee3\u7406\u51b2\u7a81\uff01\u53ef\u80fd\u88ab\u5176\u4ed6\u6269\u5c55\u63d2\u4ef6\u5360\u7528\u4e86\u4ee3\u7406\u6743\u9650\uff0c\u8bf7\u68c0\u67e5\u5e76\u91cd\u542f\u672c\u63d2\u4ef6"),
-                    F = !0) : "not_controllable" === b.levelOfControl && (localStorage.DEBUG && console.info("[proxy cannot be controlled!]"), w.off("!", "\u4ee3\u7406\u8bbe\u7f6e\u5931\u8d25\uff01\u8bf7\u68c0\u67e5\u6d4f\u89c8\u5668\u76f8\u5173\u8bbe\u7f6e\u5e76\u91cd\u542f\u672c\u63d2\u4ef6"), F = !0)
-            });
-        setTimeout(G, 3E5)
-    };
+        }), setTimeout(q, 18E5))}, F = !1,
+        G = function () {
+            chrome.proxy.settings.get({incognito: !1},
+                function (b) {
+                    "controllable_by_this_extension" === b.levelOfControl || "controlled_by_this_extension" === b.levelOfControl ? (localStorage.DEBUG && console.info("[proxy controlled by ggfwzs!]"), F && (w.on(), F = !1)) : "controlled_by_other_extensions" === b.levelOfControl ? (localStorage.DEBUG && console.info("[proxy controlled by other extension!]"), w.off("!", "代理冲突！可能被其他扩展插件占用了代理权限，请检查并重启本插件"),
+                        F = !0) : "not_controllable" === b.levelOfControl && (localStorage.DEBUG && console.info("[proxy cannot be controlled!]"), w.off("!", "代理设置失败！请检查浏览器相关设置并重启本插件"), F = !0)
+                });
+            setTimeout(G, 3E5)
+        };
     t.I = function (b) {
         h = b.pacScriptStr;
         f = b.uuid;
@@ -2393,7 +2392,7 @@ define("app/p", [], function (d, t) {
                     username: m,
                     password: f
                 }
-            }), u--) : (console.error("Error: username:" + m + " - password:" + b.uuid), w.off("!", "\u9519\u8bef\uff1a\u5e10\u53f7\u5931\u6548\u6216\u8fc7\u671f\uff0c\u8bf7\u91cd\u542f\u6d4f\u89c8\u5668"), t.D(), c({cancel: !0})) : c()
+            }), u--) : (console.error("Error: username:" + m + " - password:" + b.uuid), w.off("!", "帐号不对"), t.D(), c({cancel: !0})) : c()
         }, {urls: ["<all_urls>"]}, ["asyncBlocking"])
     };
     t.D = function () {
@@ -2405,7 +2404,7 @@ define("app/p", [], function (d, t) {
 define("app/notifications", [], function (d, t) {
     function n(d) {
         "" === d.icon && (d.icon = chrome.runtime.getURL("/icons/icon-128.png"));
-        var m = [{title: "\u9a6c\u4e0a\u53bb\u770b\u770b", iconUrl: chrome.runtime.getURL("/icons/icon-128.png")}];
+        var m = [{title: "马上去看看", iconUrl: chrome.runtime.getURL("/icons/icon-128.png")}];
         chrome.notifications.create("GGFWZSNOTIFICATION" + d.time, {
             type: "basic",
             title: d.title,
@@ -2485,7 +2484,7 @@ define("app/mainServer", [], function (d, t) {
                         d()
                     })
                 } catch (A) {
-                    r(), d();
+                    r(), d()
                 }
             }, error: function (m) {
                 console.error(m);
@@ -2496,29 +2495,41 @@ define("app/mainServer", [], function (d, t) {
     }
 });
 seajs.use("app/u lib/t app/t app/p app/b app/notifications app/mainServer".split(" "), function (d, t, n, r, w, p, m) {
-    // w.off("...", "\u6b63\u5728\u5bfb\u627e\u4ee3\u7406\u670d\u52a1\u5668,\u8bf7\u7b49\u5f8510\u79d2");
-    w.off("...", "正在寻找代理服务器,请等待10秒");
+    w.off("...", "正在寻找代理,请等待10秒");
     m.get(function () {
         n.D();
         n.R(function () {
-            localStorage["auto-homepage"] && "true" == localStorage["auto-homepage"] && chrome.tabs.create({url: localStorage.homepage}, function (d) {
-                d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
-                    url: localStorage.homepage,
-                    focused: !0
-                })
-            });
+            // localStorage["auto-homepage"] && "true" == localStorage["auto-homepage"] && chrome.tabs.create({url: localStorage.homepage}, function (d) {
+            //     d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
+            //         url: localStorage.homepage,
+            //         focused: !0
+            //     })
+            // });
             n.RT();
             n.C(function (d) {
-                console.info("- task success -");
                 r.I(d);
                 n.U()
             }, function (d) {
                 console.info("Task fail:" + d.error);
-                // w.off("!", '\u7a0b\u5e8f\u5c1a\u672a\u6fc0\u6d3b\uff0c\u8bf7\u60a8<a target="_blank" href="/ChromePlugins/GoogleAccessAssistant/theme/warming.html">\u6309\u7167\u6b65\u9aa4</a>\u8bbe\u7f6e\u9996\u9875');
-                w.off("!", '程序尚未激活，请您<a target="_blank" href="javascript:alert(\'hehe\');">按照步骤</a>设置首页');
+                // w.off("!", '\u7a0b\u5e8f\u5c1a\u672a\u6fc0\u6d3b\uff0c\u8bf7\u60a8<a target="_blank" href="/theme/warming.html">\u6309\u7167\u6b65\u9aa4</a>\u8bbe\u7f6e\u9996\u9875');
+                // var m = localStorage.Installed;
+                // m && !d.oldExist ? 2592E5 < Date.now() - parseInt(m) ? needShowWarming = !0 : (needShowWarming = !1, chrome.tabs.create({url: "theme/warming.html"}, function (d) {
+                //     d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
+                //         url: "theme/warming.html",
+                //         focused: !0
+                //     })
+                // })) :
+                //     needShowWarming = !1;
+                // d.oldExist ? (console.info("- Using old -"), chrome.tabs.create({url: "theme/warming.html"}, function (d) {
+                //     d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
+                //         url: "theme/warming.html",
+                //         focused: !0
+                //     })
+                // }), r.I(d)) : r.D();
+                // n.U()
             });
             p.init()
-        }, function () {
+        }, function (d) {
             p.installNotification();
             n.A(function (d) {
                 w.on();
@@ -2529,32 +2540,20 @@ seajs.use("app/u lib/t app/t app/p app/b app/notifications app/mainServer".split
                 }, 216E5)
             }, function (d) {
                 console.error("apply fail:" + d.error);
-                badge.off("!", "错误：申请试用失败");
-                // badge.off("!", "\u9519\u8bef\uff1a\u7533\u8bf7\u8bd5\u7528\u5931\u8d25");
+                badge.off("!", "\u9519\u8bef\uff1a\u7533\u8bf7\u8bd5\u7528\u5931\u8d25");
                 n.U()
             })
         });
         n.F(function () {
-            // chrome.tabs.create({url: "index.html"}, function (d) {
-            //     d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
-            //         url: "index.html",
-            //         focused: !0
-            //     })
-            // })
-            console.info('Hello Google');
+            console.info("- first run -");
+            chrome.tabs.create({url: "first.html"}, function (d) {
+                d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
+                    url: "first.html",
+                    focused: !0
+                })
+            })
         }, function (d) {
             console.info(d)
         })
     })
 });
-// setTimeout(function () {
-//     var d = d || [];
-//     d.push(["_setAccount", "UA-48334954-3"]);
-//     d.push(["_trackPageview"]);
-//     d = document.createElement("script");
-//     d.type = "text/javascript";
-//     d.async = !0;
-//     d.src = "https://ssl.google-analytics.com/ga.js";
-//     var t = document.getElementsByTagName("script")[0];
-//     t.parentNode.insertBefore(d, t)
-// }, 1E4);
