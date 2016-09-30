@@ -39,7 +39,6 @@
                 configurable: false
             });
         }
-
         injectFunction(inject_init);
     }
 
@@ -106,9 +105,6 @@
 
 
     if(window.location.hostname.indexOf('google.com')>0){
-        main();
-    }
-    if(window.location.hostname.indexOf('android.com')>0){
         main();
     }
 })(window);

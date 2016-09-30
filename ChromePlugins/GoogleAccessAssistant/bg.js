@@ -2166,8 +2166,7 @@ define("app/t", [], function (d, t) {
     };
     t.F = function (b, d) {
         var f = localStorage.Installed;
-        f ? p.isFunction(d) && d(parseInt(f)) : (localStorage.Installed = Date.now(),
-        p.isFunction(b) && b())
+        f ? p.isFunction(d) && d(parseInt(f)) : (localStorage.Installed = Date.now(), p.isFunction(b) && b())
     };
     t.RT = function () {
         chrome.tabs.query({}, function (b) {
@@ -2221,21 +2220,21 @@ define("app/b", [], function (d, t) {
         warming: "",
         tips: "\u4ea4\u6d41QQ\u7fa4\uff1a176080917"
     };
+    var title =  "Google Access Assistant";
     localStorage["popup-message"] && (window.popupView.tips = localStorage["popup-message"]);
     t.off = function (d, r, t, p) {
         window.popupView.warming = r;
         t || (t = "#ff0000");
-        p || (p = "\u8c37\u6b4c\u8bbf\u95ee\u52a9\u624b");
-        chrome.browserAction.setIcon({path: "/icons/inactive.png"});
+        chrome.browserAction.setIcon({path: "/icons/inactive.png"});/*显示为未激活状态*/
         chrome.browserAction.setBadgeText({text: d});
         chrome.browserAction.setBadgeBackgroundColor({color: t});
-        chrome.browserAction.setTitle({title: p});
+        chrome.browserAction.setTitle({title: p || title});
         window.popupView.status = "off"
     };
     t.on = function (d) {
-        chrome.browserAction.setIcon({path: "/icons/icon.png"});
+        chrome.browserAction.setIcon({path: "/icons/icon.png"});/*显示为激活状态*/
         chrome.browserAction.setBadgeText({text: ""});
-        chrome.browserAction.setTitle({title: "\u8c37\u6b4c\u8bbf\u95ee\u52a9\u624b"});
+        chrome.browserAction.setTitle({title: title});
         window.popupView.status = "on";
         window.popupView.speed = d
     };
@@ -2486,7 +2485,7 @@ define("app/mainServer", [], function (d, t) {
                         d()
                     })
                 } catch (A) {
-                    r(), d()
+                    r(), d();
                 }
             }, error: function (m) {
                 console.error(m);
@@ -2519,7 +2518,7 @@ seajs.use("app/u lib/t app/t app/p app/b app/notifications app/mainServer".split
                 w.off("!", '程序尚未激活，请您<a target="_blank" href="javascript:alert(\'hehe\');">按照步骤</a>设置首页');
             });
             p.init()
-        }, function (d) {
+        }, function () {
             p.installNotification();
             n.A(function (d) {
                 w.on();
@@ -2536,13 +2535,13 @@ seajs.use("app/u lib/t app/t app/p app/b app/notifications app/mainServer".split
             })
         });
         n.F(function () {
-            console.info("- first run -");
-            chrome.tabs.create({url: "first.html"}, function (d) {
-                d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
-                    url: "first.html",
-                    focused: !0
-                })
-            })
+            // chrome.tabs.create({url: "index.html"}, function (d) {
+            //     d ? chrome.windows.update(d.windowId, {focused: !0}) : chrome.windows.create({
+            //         url: "index.html",
+            //         focused: !0
+            //     })
+            // })
+            console.info('Hello Google');
         }, function (d) {
             console.info(d)
         })
